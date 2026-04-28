@@ -31,14 +31,15 @@ export type ReviewCategory =
 
 export type SensitivityLevel = "Low" | "Medium" | "High";
 
-export type PublishState =
+export type ReviewDecision =
   | "Review required"
-  | "Approved"
-  | "Editing"
+  | "Approved as written"
+  | "Edited wording"
+  | "Rewritten for team use"
   | "Private"
   | "Hidden"
-  | "Team norm"
-  | "Feedback later";
+  | "Converted to team norm"
+  | "Feedback requested";
 
 export type ReviewInsight = {
   id: string;
@@ -49,13 +50,14 @@ export type ReviewInsight = {
   aiInterpretation: string;
   teamFacingDraft: string;
   originalDraft: string;
+  editedDraft: string;
   sensitivity: SensitivityLevel;
   confidence: number;
   defaultVisibility: "Team-facing" | "Private by default";
-  publishState: PublishState;
+  decision: ReviewDecision;
 };
 
-export type FilterOption =
+export type FilterKey =
   | "All insights"
   | "Team-facing"
   | "Review required"
@@ -82,7 +84,7 @@ export const uploadedProfile: UploadedProfile = {
   confidence: 92,
 };
 
-export const filterOptions: FilterOption[] = [
+export const filterOptions: FilterKey[] = [
   "All insights",
   "Team-facing",
   "Review required",
@@ -110,10 +112,12 @@ export const reviewInsights: ReviewInsight[] = [
       "When you need Maya's decision, bring two or three credible options, the trade-offs, the customer impact, and your recommended path.",
     originalDraft:
       "When you need Maya's decision, bring two or three credible options, the trade-offs, the customer impact, and your recommended path.",
+    editedDraft:
+      "When you need Maya's decision, bring two or three credible options, the trade-offs, the customer impact, and your recommended path.",
     sensitivity: "Low",
     confidence: 94,
     defaultVisibility: "Team-facing",
-    publishState: "Approved",
+    decision: "Approved as written",
   },
   {
     id: "insight-2",
@@ -128,10 +132,12 @@ export const reviewInsights: ReviewInsight[] = [
       "If you see risk, name it directly and early. Use evidence, risk language, and a proposed alternative when possible.",
     originalDraft:
       "If you see risk, name it directly and early. Use evidence, risk language, and a proposed alternative when possible.",
+    editedDraft:
+      "If you see risk, name it directly and early. Use evidence, risk language, and a proposed alternative when possible.",
     sensitivity: "Medium",
     confidence: 90,
     defaultVisibility: "Team-facing",
-    publishState: "Review required",
+    decision: "Review required",
   },
   {
     id: "insight-3",
@@ -146,10 +152,12 @@ export const reviewInsights: ReviewInsight[] = [
       "When pace increases, ask for the operating context you need. Use the shared decision log to reduce guessing.",
     originalDraft:
       "When pace increases, ask for the operating context you need. Use the shared decision log to reduce guessing.",
+    editedDraft:
+      "When pace increases, ask for the operating context you need. Use the shared decision log to reduce guessing.",
     sensitivity: "High",
     confidence: 86,
     defaultVisibility: "Private by default",
-    publishState: "Review required",
+    decision: "Review required",
   },
   {
     id: "insight-4",
@@ -164,10 +172,12 @@ export const reviewInsights: ReviewInsight[] = [
       "Show progress through customer evidence, shipped learning, or a clearer next move rather than status activity alone.",
     originalDraft:
       "Show progress through customer evidence, shipped learning, or a clearer next move rather than status activity alone.",
+    editedDraft:
+      "Show progress through customer evidence, shipped learning, or a clearer next move rather than status activity alone.",
     sensitivity: "Low",
     confidence: 88,
     defaultVisibility: "Team-facing",
-    publishState: "Review required",
+    decision: "Review required",
   },
   {
     id: "insight-5",
@@ -182,10 +192,12 @@ export const reviewInsights: ReviewInsight[] = [
       "For major product calls, send the pre-read early and protect synthesis time before the meeting.",
     originalDraft:
       "For major product calls, send the pre-read early and protect synthesis time before the meeting.",
+    editedDraft:
+      "For major product calls, send the pre-read early and protect synthesis time before the meeting.",
     sensitivity: "Medium",
     confidence: 82,
     defaultVisibility: "Private by default",
-    publishState: "Private",
+    decision: "Private",
   },
   {
     id: "insight-6",
@@ -200,10 +212,12 @@ export const reviewInsights: ReviewInsight[] = [
       "Use Maya for narrative alignment when teams need to turn ambiguity into a clear shared story.",
     originalDraft:
       "Use Maya for narrative alignment when teams need to turn ambiguity into a clear shared story.",
+    editedDraft:
+      "Use Maya for narrative alignment when teams need to turn ambiguity into a clear shared story.",
     sensitivity: "Low",
     confidence: 91,
     defaultVisibility: "Team-facing",
-    publishState: "Approved",
+    decision: "Approved as written",
   },
   {
     id: "insight-7",
@@ -218,10 +232,12 @@ export const reviewInsights: ReviewInsight[] = [
       "Move forward on reversible decisions. Escalate early when customer trust, legal exposure, or architecture durability is at risk.",
     originalDraft:
       "Move forward on reversible decisions. Escalate early when customer trust, legal exposure, or architecture durability is at risk.",
+    editedDraft:
+      "Move forward on reversible decisions. Escalate early when customer trust, legal exposure, or architecture durability is at risk.",
     sensitivity: "Medium",
     confidence: 93,
     defaultVisibility: "Team-facing",
-    publishState: "Review required",
+    decision: "Review required",
   },
   {
     id: "insight-8",
@@ -236,9 +252,177 @@ export const reviewInsights: ReviewInsight[] = [
       "Keep raw stress language private. If useful, convert it into a team norm about asking for context and documenting decisions.",
     originalDraft:
       "Keep raw stress language private. If useful, convert it into a team norm about asking for context and documenting decisions.",
+    editedDraft:
+      "Keep raw stress language private. If useful, convert it into a team norm about asking for context and documenting decisions.",
     sensitivity: "High",
     confidence: 80,
     defaultVisibility: "Private by default",
-    publishState: "Hidden",
+    decision: "Hidden",
+  },
+];
+
+export type SourceSection = {
+  id: string;
+  title: string;
+  source: string;
+  summary: string;
+  confidence: number;
+};
+
+export type ExtractedInsight = {
+  id: string;
+  label: string;
+  leaderEdit: string;
+};
+
+export type IntakeResponse = {
+  id: string;
+  prompt: string;
+  response: string;
+};
+
+export type TeamNorm = {
+  id: string;
+  norm: string;
+  rationale: string;
+};
+
+export type AISuggestion = {
+  id: string;
+  title: string;
+  suggestion: string;
+  action: "Accept draft" | "Edit first" | "Keep private";
+};
+
+export type DashboardVersion = {
+  id: string;
+  version: string;
+  status: "Draft" | "Published";
+  publishedAt: string;
+  approvedBy: string;
+};
+
+export const workflowSteps = [
+  "Extract insights from profile and intake",
+  "Review evidence and AI interpretation",
+  "Choose visibility for every insight",
+  "Edit wording for team use",
+  "Preview approved cards",
+  "Publish only leader-approved guidance",
+];
+
+export const sourceSections: SourceSection[] = [
+  {
+    id: "src-1",
+    title: "Profile extraction",
+    source: "Insights Discovery profile",
+    summary: "Structured traits, strengths, and caution areas extracted into reviewable insight cards.",
+    confidence: 91,
+  },
+  {
+    id: "src-2",
+    title: "Leader intake",
+    source: "Consent and working-preferences questionnaire",
+    summary: "Leader-authored context clarifies what should be team-facing versus private.",
+    confidence: 94,
+  },
+  {
+    id: "src-3",
+    title: "AI synthesis",
+    source: "Draft operating guidance",
+    summary: "AI drafts are treated as editable suggestions that require explicit leader consent.",
+    confidence: 86,
+  },
+];
+
+export const extractedInsights: ExtractedInsight[] = [
+  {
+    id: "ext-1",
+    label: "Decision trade-offs",
+    leaderEdit: "Bring options, reversibility, customer impact, and a recommendation.",
+  },
+  {
+    id: "ext-2",
+    label: "Challenge culture",
+    leaderEdit: "Direct challenge is welcome when it is early, calm, and evidence-based.",
+  },
+  {
+    id: "ext-3",
+    label: "Pressure context",
+    leaderEdit: "Sensitive profile language becomes a working agreement about asking for context.",
+  },
+];
+
+export const intakeResponses: IntakeResponse[] = [
+  {
+    id: "int-1",
+    prompt: "What decisions should the team make without you?",
+    response: "Proceed on reversible product decisions when customer risk is low and the decision is documented.",
+  },
+  {
+    id: "int-2",
+    prompt: "What do you want people to know before escalating?",
+    response: "Escalate with user impact, options considered, and the consequence of waiting.",
+  },
+  {
+    id: "int-3",
+    prompt: "What should remain private?",
+    response: "Raw stress language should stay private unless converted into practical team norms.",
+  },
+];
+
+export const teamNorms: TeamNorm[] = [
+  {
+    id: "norm-1",
+    norm: "Write decisions where future teammates can find them.",
+    rationale: "A shared log helps the team act with leadership intent without constant approval.",
+  },
+  {
+    id: "norm-2",
+    norm: "Use challenge as a contribution, not a late veto.",
+    rationale: "Early disagreement improves speed and preserves trust when the team is moving quickly.",
+  },
+  {
+    id: "norm-3",
+    norm: "Convert sensitive profile language into working agreements.",
+    rationale: "The dashboard should protect consent while still helping the team operate better.",
+  },
+];
+
+export const aiSuggestions: AISuggestion[] = [
+  {
+    id: "ai-1",
+    title: "Draft a team-facing escalation card",
+    suggestion: "Use the risk boundary language from Maya's intake answer as a practical escalation norm.",
+    action: "Edit first",
+  },
+  {
+    id: "ai-2",
+    title: "Refresh sensitive wording",
+    suggestion: "Replace diagnostic profile labels with behavior teammates can act on.",
+    action: "Keep private",
+  },
+  {
+    id: "ai-3",
+    title: "Promote decision-log habit",
+    suggestion: "Convert missing-context risk into a team norm about documenting decisions.",
+    action: "Accept draft",
+  },
+];
+
+export const dashboardVersions: DashboardVersion[] = [
+  {
+    id: "ver-1",
+    version: "v0.4",
+    status: "Draft",
+    publishedAt: "Pending",
+    approvedBy: "Awaiting Maya",
+  },
+  {
+    id: "ver-2",
+    version: "v0.3",
+    status: "Published",
+    publishedAt: "Mar 15, 2026",
+    approvedBy: "Maya Chen",
   },
 ];

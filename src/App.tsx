@@ -31,7 +31,6 @@ import {
   reviewInsights,
   sourceSections,
   teamNorms,
-  uploadedProfile,
   workflowSteps,
   type FilterKey,
   type ReviewDecision,
