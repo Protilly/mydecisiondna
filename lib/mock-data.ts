@@ -218,3 +218,229 @@ export const approvedTeamDashboard = {
     },
   ] satisfies TeamDashboardCard[],
 };
+
+export type DecisionLane = {
+  lane: string;
+  teamCanDecide: string;
+  leaderSignOff: string;
+  checkBeforeActing: string;
+};
+
+export type EscalationThreshold = {
+  trigger: string;
+  threshold: string;
+  briefingRequirement: string;
+};
+
+export type OperatingNorm = {
+  id: string;
+  section: string;
+  intent: string;
+  teamRule: string;
+  examples: string[];
+  leaderSignal: string;
+};
+
+export type BriefingField = {
+  label: string;
+  include: string;
+  avoid: string;
+};
+
+export const approvedTeamOperatingSystem = {
+  leader: approvedTeamDashboard.leader,
+  summary:
+    "Execution rules for Maya's team: move independently where risk is reversible, make trade-offs visible, and escalate trust-bearing decisions early.",
+  reviewCadence: "Review norms every Friday after customer signal review.",
+  decisionLanes: [
+    {
+      lane: "Independent team decision",
+      teamCanDecide:
+        "Reversible product experiments, sprint-level sequencing, customer discovery plans, and implementation details inside an agreed goal.",
+      leaderSignOff:
+        "Not required when the owner is clear, customer risk is low, and the decision can be reversed within one sprint.",
+      checkBeforeActing:
+        "Confirm owner, decision log entry, customer impact, rollback path, and who needs to be informed.",
+    },
+    {
+      lane: "Leader sign-off required",
+      teamCanDecide:
+        "Prepare the recommendation, options, and trade-off framing before asking Maya to decide.",
+      leaderSignOff:
+        "Required for changes to strategic scope, executive commitments, budget, launch posture, customer trust, or cross-team resourcing.",
+      checkBeforeActing:
+        "Bring evidence, two credible options, downside risk, consequence of waiting, and the decision deadline.",
+    },
+    {
+      lane: "Pause and risk-check",
+      teamCanDecide:
+        "Run a fast pre-mortem and propose a safer next step before continuing execution.",
+      leaderSignOff:
+        "Required if the risk could be irreversible, public, legally sensitive, or damaging to platform durability.",
+      checkBeforeActing:
+        "Check assumptions, affected teams, customer messaging, data exposure, operational readiness, and fallback owner.",
+    },
+  ] satisfies DecisionLane[],
+  escalationThresholds: [
+    {
+      trigger: "Customer trust or data exposure",
+      threshold: "Escalate before action if a customer could lose confidence, access, data clarity, or continuity.",
+      briefingRequirement:
+        "State the customer impact, exposure window, mitigation options, and recommended path.",
+    },
+    {
+      trigger: "Direction change after alignment",
+      threshold:
+        "Escalate when new evidence changes scope, sequencing, launch quality, or external commitments.",
+      briefingRequirement:
+        "Show what changed, why the previous plan no longer fits, and who must be re-aligned.",
+    },
+    {
+      trigger: "Ownership split or blocked",
+      threshold:
+        "Escalate when accountability is unclear for more than one working session or a blocker crosses functions.",
+      briefingRequirement:
+        "Name the owner gap, impact of delay, decisions needed, and proposed ownership model.",
+    },
+    {
+      trigger: "Fast decision with weak follow-through",
+      threshold:
+        "Escalate when the team has made a call but next actions, decision record, or risk checks are missing.",
+      briefingRequirement:
+        "Provide the decision, expected outcome, next owners, checkpoint date, and unresolved risk.",
+    },
+  ] satisfies EscalationThreshold[],
+  briefingFields: [
+    {
+      label: "Recommendation",
+      include: "The specific decision you want and why now.",
+      avoid: "A broad topic without a decision request.",
+    },
+    {
+      label: "Evidence",
+      include: "Customer signal, data, constraints, and known assumptions.",
+      avoid: "Activity updates that do not change the decision.",
+    },
+    {
+      label: "Options",
+      include: "Two credible alternatives with trade-offs and reversibility.",
+      avoid: "Only presenting the preferred path.",
+    },
+    {
+      label: "Risk and follow-through",
+      include: "What could break, rollback path, owner, and next checkpoint.",
+      avoid: "Leaving implementation details to meeting memory.",
+    },
+  ] satisfies BriefingField[],
+  norms: [
+    {
+      id: "decision-rules",
+      section: "Decision rules",
+      intent: "Protect speed without centralizing every call.",
+      teamRule:
+        "Owners decide independently when the decision is reversible, inside current priorities, and backed by visible customer or operational evidence.",
+      examples: [
+        "Run a low-risk onboarding experiment without sign-off.",
+        "Choose implementation detail trade-offs inside an agreed architecture direction.",
+        "Ask Maya to decide when scope, launch posture, or customer trust changes.",
+      ],
+      leaderSignal: "Maya expects a decision log entry before the team treats the call as final.",
+    },
+    {
+      id: "escalation-thresholds",
+      section: "Escalation thresholds",
+      intent: "Escalate boundary risks early, not every uncertainty.",
+      teamRule:
+        "Escalate when the decision could become irreversible, affect customer trust, change cross-team commitments, or require Maya to defend the trade-off externally.",
+      examples: [
+        "Escalate legal, data, budget, launch, or executive-commitment risk.",
+        "Do not escalate low-risk sequencing questions the owner can reverse.",
+        "Escalate with options and a recommendation, not just concern.",
+      ],
+      leaderSignal: "Maya responds fastest when the consequence of waiting is explicit.",
+    },
+    {
+      id: "team-agreements",
+      section: "Team agreements",
+      intent: "Make self-directed behavior visible and repeatable.",
+      teamRule:
+        "Every workstream keeps a named owner, current decision, next checkpoint, and risk status findable in the shared operating log.",
+      examples: [
+        "Use one source of truth for decisions and next actions.",
+        "Update impacted partners before they have to ask.",
+        "Close loops in writing when meetings create new commitments.",
+      ],
+      leaderSignal: "Maya values calm, explicit handoffs over heroic memory.",
+    },
+    {
+      id: "ownership-expectations",
+      section: "Ownership expectations",
+      intent: "Keep accountability matched to outcomes.",
+      teamRule:
+        "The owner carries the outcome, narrative, dependencies, and follow-through until the decision is closed or deliberately reassigned.",
+      examples: [
+        "Name a single accountable owner even when execution is cross-functional.",
+        "Surface risks while they are still actionable.",
+        "Reassign ownership explicitly when direction changes.",
+      ],
+      leaderSignal: "Maya should not have to infer who is driving the next move.",
+    },
+    {
+      id: "meeting-norms",
+      section: "Meeting norms",
+      intent: "Use meetings to decide, unblock, or learn.",
+      teamRule:
+        "Meetings need a decision question, desired output, pre-read when context is complex, and a written close-out with owners.",
+      examples: [
+        "Cancel status-only meetings that can be handled async.",
+        "Open with the decision or blocker, then context.",
+        "End with owner, action, date, and decision-log update.",
+      ],
+      leaderSignal: "Maya will push for a recommendation before discussing background.",
+    },
+    {
+      id: "challenge-dissent",
+      section: "Challenge and dissent norms",
+      intent: "Improve decisions before alignment hardens.",
+      teamRule:
+        "Challenge early, name the evidence, separate intent from impact, and offer a better path or test.",
+      examples: [
+        "Say: 'I see the intent; the adoption data points to a different sequence.'",
+        "Challenge the leader in the room where the decision can still improve.",
+        "After the decision, commit unless new evidence changes the risk picture.",
+      ],
+      leaderSignal: "Maya sees direct, evidence-based dissent as decision hygiene.",
+    },
+    {
+      id: "risk-checks",
+      section: "Risk checks",
+      intent: "Prevent speed from hiding weak assumptions.",
+      teamRule:
+        "Before acting, check customer impact, reversibility, affected teams, data exposure, operational readiness, and the decision deadline.",
+      examples: [
+        "Run a five-minute pre-mortem for high-speed calls.",
+        "Document the assumption most likely to be wrong.",
+        "Define the signal that would make the team stop or reverse.",
+      ],
+      leaderSignal: "Maya wants risks framed as choices, not vague anxiety.",
+    },
+    {
+      id: "follow-through",
+      section: "Follow-through rules",
+      intent: "Keep fast decisions from becoming loose commitments.",
+      teamRule:
+        "Every fast decision gets a written owner, action list, checkpoint, communication target, and revisit condition before the work moves on.",
+      examples: [
+        "Log the decision within the same day.",
+        "Notify affected teams with what changed and what did not.",
+        "Schedule the risk check before momentum buries the assumption.",
+      ],
+      leaderSignal: "Maya trusts speed when the team makes the cleanup explicit.",
+    },
+  ] satisfies OperatingNorm[],
+  editableAgreements: [
+    "When Maya changes direction, the owner restates the new decision, what changed, who is impacted, and which previous commitments are now paused.",
+    "After a fast decision, the owner posts a same-day follow-through note: decision, why, next actions, owners, checkpoint, and risk to watch.",
+    "Productive challenge uses this pattern: intent understood, evidence observed, risk named, alternative proposed, decision needed.",
+  ],
+};
