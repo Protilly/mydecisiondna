@@ -22,13 +22,31 @@ type DraftOutput = {
   }>;
 };
 
+type ModuleMode = "standard" | "scenario" | "translator" | "modeling";
+
 type AiModule = {
   id: string;
   title: string;
   explanation: string;
   prompt: string;
   outputType: string;
+  mode?: ModuleMode;
   mockOutput: DraftOutput;
+};
+
+type ScenarioKey =
+  | "missed deadline"
+  | "strategic disagreement"
+  | "underperforming team member"
+  | "rapid change"
+  | "client escalation";
+
+type ScenarioModel = {
+  naturalResponse: string;
+  strengths: string;
+  blindSpots: string;
+  teamResponse: string;
+  teamAction: string;
 };
 
 const approvedInsights: Insight[] = [
@@ -79,6 +97,77 @@ const intakeData: IntakeSignal[] = [
     value: "Cross-functional team balancing product speed, customer trust, and operational detail",
   },
 ];
+
+const scenarioOptions: ScenarioKey[] = [
+  "missed deadline",
+  "strategic disagreement",
+  "underperforming team member",
+  "rapid change",
+  "client escalation",
+];
+
+const scenarioModels: Record<ScenarioKey, ScenarioModel> = {
+  "missed deadline": {
+    naturalResponse:
+      "This leader is likely to quickly isolate the decision-impacting details: what slipped, whether the customer or milestone is exposed, and what can still be recovered. They may move fast to reset scope and assign a visible checkpoint.",
+    strengths:
+      "High urgency, practical triage, and a bias toward a concrete recovery path instead of prolonged blame.",
+    blindSpots:
+      "The team may experience the pace as pressure to explain before they have diagnosed root cause, which can hide operational learning.",
+    teamResponse:
+      "Lead with the revised delivery path, name the smallest decision needed from the leader, and separate immediate recovery from the later retrospective.",
+    teamAction:
+      "Create a 48-hour recovery board with owner, risk, next checkpoint, and one learning question to revisit after the deadline is stabilized.",
+  },
+  "strategic disagreement": {
+    naturalResponse:
+      "This leader will probably welcome direct challenge if it is grounded in evidence and tradeoffs. They may push the group to define the reversible test or the durable commitment at stake.",
+    strengths:
+      "Healthy challenge can sharpen the decision, surface assumptions, and keep disagreement tied to the business objective.",
+    blindSpots:
+      "People who need more processing time may withhold concerns if the debate feels too fast or too forceful.",
+    teamResponse:
+      "Frame disagreement as a decision aid: state the shared goal, the specific assumption in question, and the alternative path with consequences.",
+    teamAction:
+      "Use a one-page tradeoff memo that compares recommendation, counter-recommendation, risks, and the condition that would change the call.",
+  },
+  "underperforming team member": {
+    naturalResponse:
+      "This leader may move quickly toward clarity: define the performance gap, ask for observable evidence, and expect a direct ownership plan with near-term checkpoints.",
+    strengths:
+      "Clear standards, reduced ambiguity, and a strong chance of converting concern into an actionable improvement path.",
+    blindSpots:
+      "The leader may underweight context such as unclear priorities, dependency drag, or support gaps if the update begins with excuses.",
+    teamResponse:
+      "Bring facts, impact, and a specific support request. Avoid vague reassurance; show what will change by the next checkpoint.",
+    teamAction:
+      "Draft a two-week improvement agreement that lists outcomes, manager support, dependency removals, and what evidence will indicate progress.",
+  },
+  "rapid change": {
+    naturalResponse:
+      "This leader is likely to orient around pattern recognition, identify what is reversible, and encourage a fast first operating rhythm while durable implications are still being assessed.",
+    strengths:
+      "Momentum, adaptability, and an ability to give the team enough direction to move without waiting for perfect certainty.",
+    blindSpots:
+      "A fast pivot can leave some team members unclear on why priorities changed or which prior commitments still matter.",
+    teamResponse:
+      "Ask for the decision type, what is known versus assumed, and which existing commitments should pause, continue, or be renegotiated.",
+    teamAction:
+      "Publish a change brief with three lists: stop, continue, and test. Add a review date so the team knows when the new pattern will be reassessed.",
+  },
+  "client escalation": {
+    naturalResponse:
+      "This leader may immediately look for the customer impact, decision owner, and credibility-restoring move. They are likely to prefer a concise response plan over a long internal postmortem in the moment.",
+    strengths:
+      "Strong external orientation, fast containment, and clear accountability for protecting trust.",
+    blindSpots:
+      "Internal teams may skip documenting root causes or emotional load if the escalation is treated only as a communications problem.",
+    teamResponse:
+      "Start with impact, customer commitment, owner, and timing. Then identify what the leader should say, approve, or unblock.",
+    teamAction:
+      "Set up an escalation room with a single customer narrative, internal fact log, next outbound message, and after-action review owner.",
+  },
+};
 
 const aiModules: AiModule[] = [
   {
@@ -219,12 +308,162 @@ const aiModules: AiModule[] = [
       ],
     },
   },
+  {
+    id: "scenario-simulator",
+    title: "Scenario Simulator",
+    explanation:
+      "Models how leadership patterns may appear in realistic workplace situations and compares likely strengths, risks, and team moves.",
+    prompt: "Choose a workplace situation to generate a structured, draft-only scenario model.",
+    outputType: "Scenario model",
+    mode: "scenario",
+    mockOutput: {
+      headline: "Scenario model ready for leader review",
+      summary:
+        "Select a situation, then generate a structured comparison of likely leader response, strengths, blind spots, and team actions.",
+      sections: [],
+    },
+  },
+  {
+    id: "team-member-translator",
+    title: "Team Member Translator",
+    explanation:
+      "Rewrites a draft update, message, or recommendation so it is more likely to land with this leader's style.",
+    prompt: "Paste a draft message to generate an aligned, editable rewrite.",
+    outputType: "Message rewrite",
+    mode: "translator",
+    mockOutput: {
+      headline: "Aligned rewrite ready for review",
+      summary:
+        "Paste a team message, then generate a draft rewrite that leads with the decision, stakes, recommendation, and specific ask.",
+      sections: [],
+    },
+  },
+  {
+    id: "leadership-style-modeling",
+    title: "Leadership Style Modeling Examples",
+    explanation:
+      "Generates concrete examples of briefings, pushback, and ownership updates that fit or miss this leader's preferences.",
+    prompt: "Generate realistic examples your team can compare, edit, and turn into norms.",
+    outputType: "Style examples",
+    mode: "modeling",
+    mockOutput: {
+      headline: "Leadership style examples ready for review",
+      summary:
+        "Generate paired examples showing what strong and weak communication looks like for this leader's patterns.",
+      sections: [],
+    },
+  },
 ];
+
+function titleCase(value: string) {
+  return value.replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function buildScenarioDraft(situation: ScenarioKey): DraftOutput {
+  const model = scenarioModels[situation];
+
+  return {
+    headline: `${titleCase(situation)}: likely leadership pattern`,
+    summary:
+      "Mock scenario output using the selected approved insights. Treat this as a draft hypothesis to edit with the leader and team before saving.",
+    sections: [
+      {
+        title: "How this leader might naturally respond",
+        body: model.naturalResponse,
+      },
+      {
+        title: "Likely strengths in that response",
+        body: model.strengths,
+      },
+      {
+        title: "Likely blind spots in that response",
+        body: model.blindSpots,
+      },
+      {
+        title: "Recommended team response",
+        body: model.teamResponse,
+      },
+      {
+        title: "Recommended self-directed team action",
+        body: model.teamAction,
+      },
+    ],
+  };
+}
+
+function buildTranslatorDraft(message: string): DraftOutput {
+  const cleanMessage = message.trim();
+  const fallbackMessage =
+    "We are behind on the launch readiness work and need a decision on whether to reduce scope or move the date.";
+  const sourceMessage = cleanMessage || fallbackMessage;
+
+  return {
+    headline: "Rewritten update aligned to this leader's style",
+    summary:
+      "Mock rewrite that leads with the decision needed, makes the tradeoff explicit, and gives the leader a clear path to respond.",
+    sections: [
+      {
+        title: "Original draft",
+        body: sourceMessage,
+      },
+      {
+        title: "Rewritten version",
+        body: `Decision needed: confirm whether we should protect the current timeline by reducing scope, or keep scope and move the milestone. My recommendation is to protect the timeline and defer the two lower-confidence items. The main tradeoff is customer completeness versus launch credibility. If you agree, I will update Product, Success, and Ops by 3 PM with the revised scope and the checkpoint we will use to revisit the deferred items.`,
+      },
+      {
+        title: "Why this fits the leader",
+        body: "It starts with the call required, separates recommendation from tradeoff, names the execution path, and asks for a specific decision instead of a broad reaction.",
+      },
+      {
+        title: "Optional tighter version",
+        body: "Recommendation: keep the launch date and cut two lower-confidence items. Risk is a narrower customer story; benefit is preserving trust and team focus. Please confirm by 3 PM so I can align Product, Success, and Ops.",
+      },
+    ],
+  };
+}
+
+function buildModelingDraft(): DraftOutput {
+  return {
+    headline: "Communication examples for this leadership style",
+    summary:
+      "Mock examples for team practice. Use them as editable drafts, not rules, and save only the examples that the leader validates.",
+    sections: [
+      {
+        title: "Good briefing",
+        body: "Decision needed: approve a two-week reversible pilot for the enterprise onboarding flow. Stakes are customer trust and implementation load. Recommendation: pilot with three accounts, measure setup time and support tickets, then return with a scale/no-scale call.",
+      },
+      {
+        title: "Poor briefing",
+        body: "We have been thinking about onboarding and there are several possibilities. The team has different opinions, and we can walk through the whole background before deciding what to do.",
+      },
+      {
+        title: "Productive pushback",
+        body: "I agree with the goal of moving faster. The assumption I want to test is support capacity: if ticket volume rises above 15 percent, the pilot could damage trust. Could we add that as a stop condition?",
+      },
+      {
+        title: "Poor pushback",
+        body: "I just do not think this is the right time. It feels risky, and I am not sure the team is ready.",
+      },
+      {
+        title: "Good ownership update",
+        body: "Owner update: the vendor review is on track for Friday. One dependency is Legal's data-processing clause; I have a 10 AM checkpoint booked. If it slips, I will bring you a narrowed approval path by noon.",
+      },
+      {
+        title: "Weak ownership update",
+        body: "The vendor review is moving along. Legal may have some comments, and I will let you know if anything important comes up.",
+      },
+    ],
+  };
+}
 
 function App() {
   const [selectedInsightIds, setSelectedInsightIds] = useState<string[]>(["speed", "detail"]);
   const [selectedIntakeIds, setSelectedIntakeIds] = useState<string[]>(["pace", "risk", "team"]);
   const [selectedModuleId, setSelectedModuleId] = useState(aiModules[0].id);
+  const [selectedScenario, setSelectedScenario] = useState<ScenarioKey>("missed deadline");
+  const [translatorInput, setTranslatorInput] = useState(
+    "We are tracking behind on launch readiness. I think we may need to cut a few items, but the team is still discussing options.",
+  );
   const [drafts, setDrafts] = useState<Record<string, DraftOutput>>({});
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState(
@@ -261,9 +500,26 @@ function App() {
     );
   };
 
+  const createDraftForModule = (module: AiModule) => {
+    if (module.mode === "scenario") {
+      return buildScenarioDraft(selectedScenario);
+    }
+
+    if (module.mode === "translator") {
+      return buildTranslatorDraft(translatorInput);
+    }
+
+    if (module.mode === "modeling") {
+      return buildModelingDraft();
+    }
+
+    return module.mockOutput;
+  };
+
   const runModule = (module: AiModule) => {
+    const draft = createDraftForModule(module);
     setSelectedModuleId(module.id);
-    setDrafts((current) => ({ ...current, [module.id]: module.mockOutput }));
+    setDrafts((current) => ({ ...current, [module.id]: draft }));
     setEditingDraftId(null);
     setActionMessage(
       `${module.title} generated a mocked Draft AI Suggestion from ${sourceSummary}.`,
@@ -442,6 +698,15 @@ function App() {
           )}
         </div>
 
+        <AdvancedModuleControls
+          module={selectedModule}
+          selectedScenario={selectedScenario}
+          translatorInput={translatorInput}
+          onScenarioChange={setSelectedScenario}
+          onTranslatorInputChange={setTranslatorInput}
+          onGenerate={() => runModule(selectedModule)}
+        />
+
         {currentDraft ? (
           <DraftCard
             draft={currentDraft}
@@ -468,6 +733,100 @@ function App() {
       </section>
     </main>
   );
+}
+
+type AdvancedModuleControlsProps = {
+  module: AiModule;
+  selectedScenario: ScenarioKey;
+  translatorInput: string;
+  onScenarioChange: (scenario: ScenarioKey) => void;
+  onTranslatorInputChange: (value: string) => void;
+  onGenerate: () => void;
+};
+
+function AdvancedModuleControls({
+  module,
+  selectedScenario,
+  translatorInput,
+  onScenarioChange,
+  onTranslatorInputChange,
+  onGenerate,
+}: AdvancedModuleControlsProps) {
+  if (module.mode === "scenario") {
+    return (
+      <div className="advanced-controls">
+        <div>
+          <p className="eyebrow">Scenario input</p>
+          <h3>Choose a workplace situation</h3>
+          <p>
+            The simulator keeps the same five comparison fields for every scenario so leaders
+            and teams can compare patterns side by side.
+          </p>
+        </div>
+        <label className="field-control">
+          Situation
+          <select
+            value={selectedScenario}
+            onChange={(event) => onScenarioChange(event.target.value as ScenarioKey)}
+          >
+            {scenarioOptions.map((scenario) => (
+              <option key={scenario} value={scenario}>
+                {titleCase(scenario)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button type="button" onClick={onGenerate}>
+          Generate scenario draft
+        </button>
+      </div>
+    );
+  }
+
+  if (module.mode === "translator") {
+    return (
+      <div className="advanced-controls">
+        <div>
+          <p className="eyebrow">Translator input</p>
+          <h3>Paste a draft update or recommendation</h3>
+          <p>
+            The mock translator rewrites toward this leader's preference for decision clarity,
+            tradeoffs, practical next steps, and specific asks.
+          </p>
+        </div>
+        <label className="field-control">
+          Draft message
+          <textarea
+            value={translatorInput}
+            onChange={(event) => onTranslatorInputChange(event.target.value)}
+          />
+        </label>
+        <button type="button" onClick={onGenerate}>
+          Generate aligned rewrite
+        </button>
+      </div>
+    );
+  }
+
+  if (module.mode === "modeling") {
+    return (
+      <div className="advanced-controls modeling-controls">
+        <div>
+          <p className="eyebrow">Example generator</p>
+          <h3>Generate communication examples</h3>
+          <p>
+            Produces realistic good and weak examples for briefings, pushback, and ownership
+            updates that the team can edit into reusable norms.
+          </p>
+        </div>
+        <button type="button" onClick={onGenerate}>
+          Generate style examples
+        </button>
+      </div>
+    );
+  }
+
+  return null;
 }
 
 type DraftCardProps = {

@@ -285,6 +285,7 @@ h4 {
 
 .module-card button,
 .empty-draft button,
+.advanced-controls button,
 .draft-actions button {
   background: #253b2c;
   border-radius: 999px;
@@ -309,6 +310,7 @@ h4 {
 
 .module-card button:hover,
 .empty-draft button:hover,
+.advanced-controls button:hover,
 .draft-actions button:hover {
   transform: translateY(-1px);
 }
@@ -372,6 +374,58 @@ h4 {
   font-size: 0.88rem;
   font-weight: 800;
   padding: 8px 12px;
+}
+
+.advanced-controls {
+  background: #f8f2e8;
+  border: 1px solid #eadfce;
+  border-radius: 22px;
+  display: grid;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 18px;
+}
+
+.advanced-controls h3 {
+  margin: 0 0 8px;
+}
+
+.advanced-controls p {
+  color: #5e6c62;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.advanced-controls button {
+  justify-self: start;
+}
+
+.modeling-controls {
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.field-control {
+  color: #314339;
+  display: grid;
+  font-weight: 900;
+  gap: 8px;
+}
+
+.field-control select,
+.field-control textarea {
+  background: #fffdf9;
+  border: 1px solid #ded3c3;
+  border-radius: 16px;
+  color: #27362d;
+  line-height: 1.55;
+  padding: 14px 16px;
+  width: 100%;
+}
+
+.field-control textarea {
+  min-height: 138px;
+  resize: vertical;
 }
 
 .draft-card {
