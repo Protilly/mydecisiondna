@@ -564,18 +564,14 @@ function App() {
       return;
     }
 
-    if (action === "Edit draft") {
+    if (action === "Edit") {
       setEditingDraftId(selectedModule.id);
       setActionMessage(`${selectedModule.title} draft is editable. Review before accepting or saving.`);
       return;
     }
 
-    if (action === "Accept draft") {
-      setEditingDraftId(null);
-    }
-
     setActionMessage(
-      `${action} selected for ${selectedModule.title}. This mock UI keeps the choice visible for review.`,
+      `${action} selected for ${selectedModule.title}. This mock UI keeps the output in draft review.`,
     );
   };
 
@@ -844,7 +840,7 @@ function DraftCard({
   onUpdateSection,
   onAction,
 }: DraftCardProps) {
-  const actions = ["Accept draft", "Edit draft", "Discard", "Save as card", "Save as team norm"];
+  const actions = ["Edit", "Discard", "Save as card", "Save as team norm"];
 
   return (
     <article className="draft-card">
@@ -895,7 +891,7 @@ function DraftCard({
         {actions.map((action) => (
           <button
             className={
-              action === "Discard" ? "secondary danger" : action === "Edit draft" ? "secondary" : ""
+              action === "Discard" ? "secondary danger" : action === "Edit" ? "secondary" : ""
             }
             type="button"
             key={action}
